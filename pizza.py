@@ -358,17 +358,17 @@ def cnlen(text):
     length = 0
     for char in str(text):
         code = ord(char)
-        if (0x4E00 <= code <= 0x9FFF or
-            0x3400 <= code <= 0x4DBF or
+        if (0x4E00  <= code <= 0x9FFF or
+            0x3400  <= code <= 0x4DBF or
             0x20000 <= code <= 0x2A6DF or
             0x2A700 <= code <= 0x2B73F or
             0x2B740 <= code <= 0x2B81F or
             0x2B820 <= code <= 0x2CEAF or
             0x2CEB0 <= code <= 0x2EBEF or
             0x30000 <= code <= 0x3134F or
-            0xF900 <= code <= 0xFAFF or
+            0xF900  <= code <= 0xFAFF or
             0x2F800 <= code <= 0x2FA1F or
-            0xFF00 <= code <= 0xFFEF or
+            0xFF00  <= code <= 0xFFEF or
             char in '，。！？；：「」【】（）《》'):
             length += 2
         else:
