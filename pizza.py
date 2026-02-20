@@ -150,6 +150,7 @@ class project:
                 "author" : _("作者名称", "Author name"),
                 "main"   : "src/main.py:main",
                 "deps"    : [],
+                "scripts": {},
                 "build": {
                     "icon"   : None,
                     "console": True,
@@ -185,16 +186,40 @@ class project:
             print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
             return
 
+    def scripts(name):
+        if os.path.isfile("pizza.json"):
+            with open("pizza.json", "r", encoding="utf-8") as file:
+                try:
+                    data = json.load(file)
+                except:
+                    return 127
+
+            if data.get("scripts") is None:
+                return 127
+
+            if name not in data["scripts"]:
+                return 127
+
+            if os.name == "nt" and type(data["scripts"][name]) is list:
+                if len(data["scripts"][name]) >= 1:
+                    subprocess.run(data["scripts"][name][0], shell=True)
+                else:
+                    return 127
+            elif type(data["scripts"][name]) is list:
+                if len(data["scripts"][name]) >= 2:
+                    subprocess.run(data["scripts"][name][1], shell=True)
+                elif len(data["scripts"][name]) == 1:
+                    subprocess.run(data["scripts"][name][0], shell=True)
+                else:
+                    return 127
+            else:
+                subprocess.run(data["scripts"][name], shell=True)
+
+        else:
+            return 127
+
 def _(zh, en):
     return zh if LANG == "zh" else en
-
-def run(data):
-    _buildrun(data, False)
-    return
-
-def build(data):
-    _buildrun(data, True)
-    return
 
 def _buildrun(data, build):
     if "main" not in data:
@@ -473,7 +498,7 @@ def cnlen(text):
     return length
 
 def _help():
-    VERSION = "1.2.2"
+    VERSION = "1.3.0"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -522,10 +547,14 @@ def main(args=None):
 
         try:
             if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set"] or args[1] == "help":
-                if args[1] != "help":
-                    print(_("\033[91m[错误] 没有这个参数\033[0m", "\033[91m[Error] Unknown parameter\033[0m"))
+                ret = project.scripts(args[1])
+                if ret == 127:
+                    if args[1] != "help":
+                        print(_("\033[91m[错误] 没有这个参数\033[0m", "\033[91m[Error] Unknown parameter\033[0m"))
 
-                _help()
+                    _help()
+
+                return
 
             if args[1] == "new":
                 if len(args) >= 3:
