@@ -186,6 +186,7 @@ class project:
             print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
             return
 
+    @staticmethod
     def scripts(name):
         if os.path.isfile("pizza.json"):
             with open("pizza.json", "r", encoding="utf-8") as file:
@@ -298,8 +299,24 @@ def _buildrun(data, build):
         file.write(open(data["main"], "r", encoding="utf-8").read() + f"\nif __name__ == '__main__': {func}()")
 
     if not build:
-        subprocess.run(["python" if os.name == "nt" else "python3", tmpfile])
+        args = None
+        pos  = None
+        i    = 0
+        for arg in sys.argv:
+            if arg == "--":
+                pos = i
+                break
+            i += 1
+
+        if pos is not None:
+            try:
+                args = [a for a in sys.argv[pos+1:]]
+            except IndexError:
+                args = None
+
+        subprocess.run(["python" if os.name == "nt" else "python3", tmpfile] + args if args is not None else [])
         os.remove(tmpfile)
+
     else:
         if data["main"][-3:] == ".py":
             exe    = os.path.basename(data["main"][:-3] + ".exe")
@@ -498,7 +515,7 @@ def cnlen(text):
     return length
 
 def _help():
-    VERSION = "1.3.0"
+    VERSION = "1.3.1"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -534,6 +551,7 @@ def _help():
     print(f"  \033[36m-i {_('<图标文件>  ', '<Icon File> ')}\033[0m- \033[93m" + _("设置build可执行文件图标", "Set icon for built executable") + "\033[0m")
     print(f"  \033[36m-g\033[0m             - \033[93m" + _("build可执行文件不显示终端", "Build executable without console") + "\033[0m")
     print(f"  \033[36m-s\033[0m             - \033[93m" + _("跳过依赖安装错误", "Skip dependency installation errors") + "\033[0m")
+    print(f"  \033[36m-- {_('<参数>      ', '<Arguments> ')}\033[0m- \033[93m" + _("run传入参数", "Parameters passed to run") + "\033[0m")
     print()
 
 def main(args=None):
@@ -568,7 +586,7 @@ def main(args=None):
                 project.info()
                 return
 
-            if args[1] in ["build", "run"] and len(args) >= 3:
+            if args[1] in ["build", "run"] and len(args) >= 3 and args[2] != "--":
                 icon = None
                 pos  = None
                 i    = 0
@@ -689,3 +707,9 @@ if __name__ == "__main__":
         exit()
     except Exception as e:
         print(_("\033[91m[错误] {}\033[0m".format(e), "\033[91m[Error] {}\033[0m".format(e)))
+    finally:
+        for file in glob.glob(".tmp_*"):
+            try:
+                os.remove(file)
+            except:
+                pass
