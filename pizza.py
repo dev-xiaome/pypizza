@@ -142,7 +142,7 @@ def _buildrun(data, build):
                     result = process.poll()
                     if result is not None:
                         if result != 0:
-                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", "") + f"] {dep}{' ' * long} | \033[91m" + _("错误", "Error") + "\033[0m", end='')
+                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", "") + f"] {dep}{' ' * long} | \033[91m" + _("ERROR", "ERROR") + "\033[0m", end='')
                             if not data.get("build").get("skip"):
                                 print("\r", end='')
                                 raise
@@ -153,7 +153,7 @@ def _buildrun(data, build):
                         else:
                             print("\r", end='')
                             print("\033[K", end='')
-                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", "") + f"] {dep}{' ' * long} | \033[92m" + _("成功", "OK") + "\033[0m")
+                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", "") + f"] {dep}{' ' * long} | \033[92m" + _("OK", "OK") + "\033[0m")
                             break
 
                     p += 1
@@ -165,7 +165,7 @@ def _buildrun(data, build):
             n += 1
 
         except Exception as e:
-            print("[第" + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", " dependencies") + f"] {dep}{' ' * long} | \033[91m" + _("错误", "Error") + "\033[0m")
+            print("[第" + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", " dependencies") + f"] {dep}{' ' * long} | \033[91m" + _("ERROR", "ERROR") + "\033[0m")
             if not data.get("build").get("skip"):
                 return
             else:
@@ -211,7 +211,7 @@ def _buildrun(data, build):
                 if data["deps"]:
                     print()
 
-                print("╭─ " + _("项目结构", "Project Structure") + " " + "─" * (long-18) + "╮")
+                print( "╭─ " + _("项目结构", "Project Structure") + " " + "─" * (_(long-9, long-18)) + "╮")
                 print(f"│ \033[97m{os.path.basename(os.getcwd())}/\033[0m" + " " * (long-5) + "│")
 
                 pos = 0
@@ -376,7 +376,7 @@ def cnlen(text):
     return length
 
 def _help():
-    VERSION = "1.2.0"
+    VERSION = "1.2.1"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -386,7 +386,7 @@ def _help():
         (r"        |___/                      ")
     )
 
-    print(f"\033[1m{'\n'.join(LOGO)}\033[0m", end='')
+    print("\033[1m{}\033[0m".format('\n'.join(LOGO)), end='')
     print(f"\r" + "\033[1C" * 25 + f"\033[96m<Version {VERSION}>\033[0m")
     print()
     print(f"\033[92m" + _("用法:", "Usage:") + "\033[0m")

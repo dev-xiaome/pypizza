@@ -4,12 +4,18 @@
 **使用非常简单的PyPizza的项目格式**<br>
 ### 使用
 #### 安装
-```pip install pypizza```
+**要求: ```Python>=3.8```**<br>
+
+**依赖: ```PyInstaller>=6.0```**<br>
+
+**运行: ```pip install pypizza```**
+
+> **通常python和pip会处理好这些依赖**
 
 ---
 
 #### 运行
-> _运行Pizza项目十分简单_
+> _**运行Pizza项目十分简单**_
 
 ```pizza run``` - **直接运行项目**
 
@@ -20,7 +26,7 @@
 ---
 
 #### 编译
->_依旧很简单_
+>_**依旧很简单**_
 
 ```pizza build``` - **编译项目**
 
@@ -100,7 +106,13 @@ $ pizza build
 **Uses a very simple PyPizza project format**<br>
 ### Usage
 #### Installation
-```pip install pypizza```
+**Requirements: ```Python>=3.8```**<br>
+
+**Dependencies: ```PyInstaller>=6.0```**<br>
+
+**Run: ```pip install pypizza```**
+
+> **Usually python and pip will handle these dependencies**
 
 ---
 
