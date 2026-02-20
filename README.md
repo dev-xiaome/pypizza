@@ -191,33 +191,3 @@ $ pizza build
 │ 编译成功 -> output/main.exe │
 ╰─────────────────────────────╯
 ```
-
----
-### **The following content is not available in English.**
----
-
-## 历史更新
-## 1.1.1&nbsp;&nbsp;&nbsp;_其它更新_
-  - **我上传PyPI时添加了这个文档**
-  - **更新了版本号到1.1.1 (废话)**
-  - **修复了一些BUG (固定刷新NPC🤣)**
-
-## 1.1.0&nbsp;&nbsp;&nbsp;_功能更新_
-  - **添加了build输出项目结构&nbsp;&nbsp;**
-
-## 1.0.3&nbsp;&nbsp;&nbsp;_累积更新_
-  - **```clean```现在会清理.spec文件**
-  - **修复```-s```参数逻辑**
-  - **API重构, 使用```build()```或```run()```**
-  - **```leng()```改名为```cnlen()```**
-  - **使用数组储存依赖安装命令更安全**
-
-### 1.0.2&nbsp;&nbsp;&nbsp;_安全更新_
-  - **移除所有 ```shell=True```**
-  - **命令执行改用```subprocess```**
-
-### 1.0.1&nbsp;&nbsp;&nbsp;_重要更新_
-  - **终于可以运行了🎉**
-
-### 1.0&nbsp;&nbsp;&nbsp;_大版本更新_
-  - **我正在尝试让它运行但...🤔**
