@@ -12,6 +12,103 @@ DATA = "AAABAAYAEBAAAAEAIABoBAAAZgAAABgYAAABACAAiAkAAM4EAAAgIAAAAQAgAKgQAABWDgAA
 LANG = 'zh' if 'Chinese' in str(locale.getlocale() or locale.getdefaultlocale()) else 'en'
 
 class project:
+    class deps:
+        @staticmethod
+        def add(name):
+            if os.path.isfile("pizza.json"):
+                with open("pizza.json", "r", encoding="utf-8") as file:
+                    try:
+                        data = json.load(file)
+                    except:
+                        print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
+                        return
+
+                try:
+                    if data.get("deps") is None:
+                        data["deps"] = []
+                        for i in name.split(","):
+                            i = i.strip()
+                            if i and i not in data["deps"]:
+                                data["deps"].append(i)
+                    else:
+                        for i in name.split(","):
+                            i = i.strip()
+                            if i and i not in data["deps"]:
+                                data["deps"].append(i)
+
+                    with open("pizza.json", "w", encoding="utf-8") as file:
+                        json.dump(data, file, indent=4, ensure_ascii=False)
+                except:
+                    print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件\033[0m写入失败", "\033[91m[Error] \033[4mpizza.json\033[24m write failed\033[0m"))
+                    return
+            else:
+                print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
+                return
+
+            return
+
+        @staticmethod
+        def remove(name):
+            if os.path.isfile("pizza.json"):
+                with open("pizza.json", "r", encoding="utf-8") as file:
+                    try:
+                        data = json.load(file)
+                    except:
+                        print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
+                        return
+
+                try:
+                    if data.get("deps") is None:
+                        print(_(f"\033[91m[错误] 依赖 \033[4m{name}\033[24m 不存在\033[0m", f"\033[91m[Error] Dependency \033[4m{name}\033[24m does not exist\033[0m"))
+                        return
+                    else:
+                        for i in name.split(","):
+                            i = i.strip()
+                            if i:
+                                if i in data["deps"]:
+                                    data["deps"].remove(i)
+                                else:
+                                    print(_(f"\033[91m[错误] 依赖 \033[4m{name}\033[24m 不存在\033[0m", f"\033[91m[Error] Dependency \033[4m{name}\033[24m does not exist\033[0m"))
+                                    return
+
+                    with open("pizza.json", "w", encoding="utf-8") as file:
+                        json.dump(data, file, indent=4, ensure_ascii=False)
+                except:
+                    print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件写入失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m write failed\033[0m"))
+                    return
+            else:
+                print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
+                return
+
+            return
+
+        @staticmethod
+        def set(name):
+            if os.path.isfile("pizza.json"):
+                with open("pizza.json", "r", encoding="utf-8") as file:
+                    try:
+                        data = json.load(file)
+                    except:
+                        print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
+                        return
+
+                try:
+                    data["deps"] = []
+                    for i in name.split(","):
+                        if i and i not in data["deps"]:
+                            data["deps"].append(i.strip())
+
+                    with open("pizza.json", "w", encoding="utf-8") as file:
+                        json.dump(data, file, indent=4, ensure_ascii=False)
+                except:
+                    print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件写入失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m write failed\033[0m"))
+                    return
+            else:
+                print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
+                return
+
+            return
+
     @staticmethod
     def info():
         if os.path.isfile("pizza.json"):
@@ -376,7 +473,7 @@ def cnlen(text):
     return length
 
 def _help():
-    VERSION = "1.2.1"
+    VERSION = "1.2.2"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -402,6 +499,10 @@ def _help():
     print(f"  \033[36mclean\033[0m                  - \033[93m" + _("清理build", "Clean build files") + "\033[0m")
     print(f"  \033[36mnew    {_('<项目名>        ', '<Project Name>  ')}\033[0m- \033[93m" + _("创建新项目", "Create new project") + "\033[0m")
     print(f"  \033[36minfo\033[0m                   - \033[93m" + _("显示项目信息", "Show project info") + "\033[0m")
+
+    print(f"  \033[36madd    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Add project dependencies") + "\033[0m")
+    print(f"  \033[36mremove {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("删除项目依赖", "Remove project dependencies") + "\033[0m")
+    print(f"  \033[36mset    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Set project dependencies") + "\033[0m")
     print(f"  \033[36mhelp\033[0m                   - \033[93m" + _("显示帮助", "Show help") + "\033[0m")
 
     print(f"\033[92m" + _("参数:", "Parameters:") + "\033[0m")
@@ -420,7 +521,7 @@ def main(args=None):
             return
 
         try:
-            if args[1] not in ["build", "run", "clean", "new", "info"] or args[1] == "help":
+            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set"] or args[1] == "help":
                 if args[1] != "help":
                     print(_("\033[91m[错误] 没有这个参数\033[0m", "\033[91m[Error] Unknown parameter\033[0m"))
 
@@ -452,7 +553,7 @@ def main(args=None):
                     try:
                         icon = args[pos + 1]
                     except IndexError:
-                        print(_("\033[91m[错误] \033[4m-i\033[24m参数需要一个图标文件\033[0m", "\033[91m[Error] \033[4m-i\033[24m requires an icon file\033[0m"))
+                        print(_("\033[91m[错误] \033[4m-i\033[24m 参数需要一个图标文件\033[0m", "\033[91m[Error] \033[4m-i\033[24m requires an icon file\033[0m"))
                         return
 
                 try:
@@ -484,6 +585,33 @@ def main(args=None):
 
             if args[1] == "build":
                 project.run(build=True)
+                return
+
+            if args[1] == "add":
+                if len(args) >= 3:
+                    project.deps.add(','.join(args[2:]))
+                else:
+                    print(_("\033[91m[错误] \033[4madd\033[24m 参数需要依赖名称\033[0m", "\033[91m[Error] \033[4madd\033[24m requires some dependencies\033[0m"))
+
+                return
+
+            if args[1] == "remove":
+                if len(args) >= 3:
+                    project.deps.remove(','.join(args[2:]))
+                else:
+                    print(_("\033[91m[错误] \033[4mremove\033[24m 参数需要依赖名称\033[0m", "\033[91m[Error] \033[4mremove\033[24m requires some dependencies\033[0m"))
+
+                return
+
+            if args[1] == "set":
+                if len(args) >= 3:
+                    if args[2] == "null":
+                        project.deps.set("")
+                    else:
+                        project.deps.set(','.join(args[2:]))
+                else:
+                    print(_("\033[91m[错误] \033[4mset\033[24m 参数需要依赖名称\033[0m", "\033[91m[Error] \033[4mset\033[24m requires some dependencies\033[0m"))
+
                 return
 
             if args[1] == "clean":
