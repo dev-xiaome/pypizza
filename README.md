@@ -74,6 +74,10 @@
     "author": "作者的名字", //作者
     "main": "src/main.py:main", //入口点(文件路径:入口函数)
     "deps": [], //依赖(pip)
+    "scripts": { //脚本
+        "test": ["py test.py","python3 test.py"] //["Windows命令", "其它系统命令"]
+        "hello": "echo hello" //通用命令
+    },
     "build": { //编译参数
         "icon": null, //图标(null使用默认)
         "console": true, //是否有控制台
