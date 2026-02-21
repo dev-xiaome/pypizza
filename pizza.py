@@ -1,3 +1,4 @@
+import configparser
 import subprocess
 import shutil
 import locale
@@ -180,7 +181,7 @@ class project:
                     print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
                     return
 
-            _buildrun(data, build=True if build else False)
+            buildrun(data, build=True if build else False)
 
         else:
             print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
@@ -219,10 +220,215 @@ class project:
         else:
             return 127
 
+    @staticmethod
+    def publish():
+        try:
+            if os.path.isfile("pizza.json"):
+                try:
+                    with open("pizza.json", "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except:
+                    print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
+                    return
+
+                if data.get("name") and data.get("main"):
+                    lines    = tree(".")
+                    in033    = False
+                    newlines = []
+                    for line in lines:
+                        newline  = ""
+                        for b in line:
+                            if b != "\033" and not in033:
+                                newline += b
+                            elif b == "\033":
+                                in033 = True
+                            elif b == "m":
+                                in033 = False
+
+                        newlines.append(newline)
+
+                    long = max(cnlen(line) for line in newlines)
+
+                    if data["deps"]:
+                        print()
+
+                    print( "╭─ " + _("项目结构", "Project Structure") + " " + "─" * (_(long-9, long-18)) + "╮")
+                    print(f"│ \033[97m{os.path.basename(os.getcwd())}/\033[0m" + (" " * (long - cnlen(os.path.basename(os.getcwd()))) + "│"))
+
+                    pos = 0
+                    for line in lines:
+                        padding = long - cnlen(newlines[pos])
+                        print(f"│ {line}{' ' * padding} │")
+                        pos += 1
+
+                    print("╰" + "─" * (long+2) + "╯")
+                    print()
+
+                    name        = data.get("name") or '""'
+                    version     = data.get("version") or '""'
+                    description = data.get("desc") or '""'
+                    author      = data.get("author") or '""'
+
+                    toml = []
+                    toml.append("[project]")
+                    toml.append(f'name = "{name}"')
+                    toml.append(f'version = "{version}"')
+                    toml.append(f'description = "{description}"')
+                    toml.append(f'authors = [ {{ name = "{author}" }}]')
+                    if data.get("deps"):
+                        deps = [f'"{d}"' for d in data["deps"]]
+                        toml.append(f'dependencies = [{", ".join(deps)}]')
+
+                    main = data.get("main") or '""'
+
+                    main = main.replace("/", ".").replace("\\", ".").replace(".py", "")
+
+                    toml.append("")
+                    toml.append("[project.scripts]")
+                    toml.append(f'"{name}" = "{main}"')
+
+                    toml.append("")
+                    toml.append("[build-system]")
+                    toml.append('requires = ["setuptools>=45", "wheel"]')
+                    toml.append('build-backend = "setuptools.build_meta"')
+
+                    try:
+                        with open("pyproject.toml", "w", encoding="utf-8") as file:
+                            file.write("\n".join(toml))
+                    except Exception as e:
+                        print(_(
+                            "\033[91m[错误] \033[4mpyproject.toml\033[24m 文件写入失败: {}\033[0m".format(e),
+                            "\033[91m[Error] Failed to write \033[4mpyproject.toml\033[24m: {}\033[0m".format(e)
+                        ))
+
+                    try:
+                        pypirc     = os.path.expanduser("~/.pypirc")
+                        config     = configparser.ConfigParser()
+                        config.read(pypirc)
+                        username = config.get("pypi", "username")
+                        password = config.get("pypi", "password")
+                    except:
+                        username = input(_("输入账号名称> ", "Enter account name> "))
+                        password = input(_("输入账号密码> ", "Enter account password> "))
+
+                    print(_("╭─ Pizza ──╮","╭─ Pizza ─────────────╮"))
+                    print(_("│          │","│                     │"))
+                    print(_("│          │","│                     │"))
+                    print(_("╰──────────╯","╰─────────────────────╯"))
+                    print("\033[F", end='')
+                    print("\033[F", end='')
+                    print("\033[F", end='')
+                    try:
+                        p = 0
+                        process = subprocess.Popen(
+                            ['python', '-m', 'build'],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                        while True:
+                            try:
+                                bar   = ["|", "/", "-", "\\"]
+                                order = [0, 1, 2, 3]
+                                if p >= len(order):
+                                    p = 0
+                                print(_("│ 打包中 ", "│ Packing ") + f"\033[36m{bar[order[p]]}\033[0m", end='\r', flush=True)
+                                result = process.poll()
+                                if result is not None:
+                                    if result != 0:
+                                        print(_("│ \033[91m打包失败\033[0m │", "│ \033[91mPacking failed\033[0m      │"), flush=True)
+                                        print()
+                                        return
+
+                                    else:
+                                        print("\r", end='')
+                                        print("\033[K", end='')
+                                        print(_("│ \033[92m打包成功\033[0m │", "│ \033[92mPacking successful\033[0m  │"), flush=True)
+                                        break
+
+                                p += 1
+                                time.sleep(0.5)
+                            except KeyboardInterrupt:
+                                print()
+                                print()
+                                print()
+                                exit()
+
+                    except:
+                        print("\033[F", end='')
+                        print("\033[F", end='')
+                        print("\033[F", end='')
+                        print(_(f"│ \033[91m打包失败\033[0m │", "│ \033[91mPacking failed\033[0m      │"), flush=True)
+                        print()
+                        print()
+                        return
+
+                    try:
+                        p = 0
+                        process = subprocess.Popen(
+                            ['twine', 'upload', '--username',  username, '--password', password, 'dist/*'],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                        while True:
+                            try:
+                                bar   = ["|", "/", "-", "\\"]
+                                order = [0, 1, 2, 3]
+                                if p >= len(order):
+                                    p = 0
+                                print(_("│ 上传中 ", "│ Uploading ") + f"\033[36m{bar[order[p]]}\033[0m", end='\r', flush=True)
+                                result = process.poll()
+                                if result is not None:
+                                    if result != 0:
+                                        print(_("│ \033[91m上传失败\033[0m │", "│ \033[91mUploading failed\033[0m    │"), flush=True)
+                                        print()
+                                        return
+
+                                    else:
+                                        print("\r", end='')
+                                        print("\033[K", end='')
+                                        print(_("│ \033[92m上传成功\033[0m │", "│ \033[92mUploading successful\033[0m │"), flush=True)
+                                        break
+
+                                p += 1
+                                time.sleep(0.5)
+                            except KeyboardInterrupt:
+                                print()
+                                print()
+                                exit()
+
+                    except:
+                        print("\033[F", end='')
+                        print("\033[F", end='')
+                        print(_(f"│ \033[91m上传失败\033[0m │", "│ \033[91mUploading failed\033[0m    │"), flush=True)
+                        print()
+                        return
+                else:
+                    print(_(
+                        "\033[91m[错误] \033[4mpizza.json\033[24m 缺少 \033[4mname\033[24m 或 \033[4mmain\033[24m 项\033[0m",
+                        "\033[91m[Error] \033[4mpizza.json\033[24m missing \033[4mname\033[24m or \033[4mmain\033[24m field\033[0m"
+                    ))
+                    return
+
+            else:
+                print(_("\033[91m[错误] 找不到 \033[4mpizza.json\033[24m 项目文件\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m not found\033[0m"))
+                return
+        except Exception as e:
+            print(_(f"\033[91m[错误] {e}\033[0m", f"\033[91m[Error] {e}\033[0m"))
+        finally:
+            try:
+                shutil.rmtree("dist")
+            except:
+                pass
+            try:
+                shutil.rmtree(f"{name}.egg-info")
+            except:
+                pass
+        return
+
 def _(zh, en):
     return zh if LANG == "zh" else en
 
-def _buildrun(data, build):
+def buildrun(data, build):
     if "main" not in data:
         print(_("\033[91m[错误] \033[4mpizza.json\033[24m 缺少 \033[4mmain\033[24m 字段\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m missing \033[4mmain\033[24m field\033[0m"))
         return
@@ -299,22 +505,7 @@ def _buildrun(data, build):
         file.write(open(data["main"], "r", encoding="utf-8").read() + f"\nif __name__ == '__main__': {func}()")
 
     if not build:
-        args = None
-        pos  = None
-        i    = 0
-        for arg in sys.argv:
-            if arg == "--":
-                pos = i
-                break
-            i += 1
-
-        if pos is not None:
-            try:
-                args = [a for a in sys.argv[pos+1:]]
-            except IndexError:
-                args = None
-
-        subprocess.run(["python" if os.name == "nt" else "python3", tmpfile] + args if args is not None else [])
+        subprocess.run(["python" if os.name == "nt" else "python3", tmpfile] + runargs)
         os.remove(tmpfile)
 
     else:
@@ -351,7 +542,7 @@ def _buildrun(data, build):
                     print()
 
                 print( "╭─ " + _("项目结构", "Project Structure") + " " + "─" * (_(long-9, long-18)) + "╮")
-                print(f"│ \033[97m{os.path.basename(os.getcwd())}/\033[0m" + " " * (long-5) + "│")
+                print(f"│ \033[97m{os.path.basename(os.getcwd())}/\033[0m" + (" " * (long - cnlen(os.path.basename(os.getcwd()))) + "│"))
 
                 pos = 0
                 for line in lines:
@@ -404,7 +595,8 @@ def _buildrun(data, build):
                         if result is not None:
                             if result != 0:
                                 print( "│ \033[91m" + _("编译失败", "Build failed") + "\033[0m")
-                                print( "╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯")
+                                print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
+                                        "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
                                 return
                             else:
                                 print(  "│ \033[92m" + _("编译成功", "Build successful") + f"\033[0m \033[93m->\033[0m \033[4moutput/{exe}\033[0m")
@@ -514,8 +706,8 @@ def cnlen(text):
             length += 1
     return length
 
-def _help():
-    VERSION = "1.3.1"
+def help():
+    VERSION = "1.3.2"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -545,6 +737,7 @@ def _help():
     print(f"  \033[36madd    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Add project dependencies") + "\033[0m")
     print(f"  \033[36mremove {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("删除项目依赖", "Remove project dependencies") + "\033[0m")
     print(f"  \033[36mset    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Set project dependencies") + "\033[0m")
+    print(f"  \033[36mpublish\033[0m                - \033[93m" + _("项目发版到PyPI", "Project release to PyPI") + "\033[0m")
     print(f"  \033[36mhelp\033[0m                   - \033[93m" + _("显示帮助", "Show help") + "\033[0m")
 
     print(f"\033[92m" + _("参数:", "Parameters:") + "\033[0m")
@@ -559,19 +752,42 @@ def main(args=None):
         if args is None:
             args = sys.argv
 
+        global runargs
+
+        runargs = []
+        pos  = None
+        i    = 0
+        for arg in sys.argv:
+            if arg == "--":
+                pos = i
+                break
+            i += 1
+
+        if pos is not None:
+            try:
+                runargs = [a for a in sys.argv[pos+1:]]
+            except:
+                runargs = []
+
+            args = [a for a in sys.argv[:pos+1]]
+
         if len(args) <= 1:
-            _help()
+            help()
             return
 
         try:
-            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set"] or args[1] == "help":
+            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set", "publish"] or args[1] == "help":
                 ret = project.scripts(args[1])
                 if ret == 127:
                     if args[1] != "help":
                         print(_("\033[91m[错误] 没有这个参数\033[0m", "\033[91m[Error] Unknown parameter\033[0m"))
 
-                    _help()
+                    help()
 
+                return
+
+            if args[1] == "publish":
+                project.publish()
                 return
 
             if args[1] == "new":
@@ -607,7 +823,7 @@ def main(args=None):
                     func    = args[2].split(":")[1]
                     args[2] = args[2].split(":")[0]
                 except:
-                    _buildrun({
+                    buildrun({
                         "main": f"{args[2]}:main",
                         "build": {
                             "icon": icon if icon else None,
@@ -616,7 +832,7 @@ def main(args=None):
                         }}, build = True if args[1] == "build" else False)
                     return
 
-                _buildrun({
+                buildrun({
                     "main": f"{args[2]}:{func}",
                     "build": {
                         "icon": icon if icon else None,
@@ -688,6 +904,13 @@ def main(args=None):
                         os.remove(file)
                     except:
                         continue
+
+                for item in os.listdir("."):
+                    if item.endswith(".egg-info"):
+                        try:
+                            shutil.rmtree(item)
+                        except:
+                            pass
 
                 return
 
