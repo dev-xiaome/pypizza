@@ -206,7 +206,7 @@ class project:
                 return 127
 
             try:
-                subprocess.run(data["scripts"][name])
+                subprocess.run(data["scripts"][name], shell=True)
             except Exception as e:
                 print(_(f"\033[91m[错误] {e}\033[0m", f"\033[91m[Error] {e}\033[0m"))
 
@@ -821,7 +821,7 @@ def cnlen(text):
     return length
 
 def help():
-    VERSION = "1.3.8"
+    VERSION = "1.3.9"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
