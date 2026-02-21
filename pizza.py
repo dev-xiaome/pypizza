@@ -446,10 +446,35 @@ class project:
 
         return
 
+    @staticmethod
+    def install():
+        try:
+            if os.path.isfile("pizza.json"):
+                try:
+                    with open("pizza.json", "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except:
+                    print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
+                    return
+
+                try:
+                    buildrun(data, False, True)
+                except KeyboardInterrupt:
+                    exit()
+                except Exception as e:
+                    print(_(f"\033[91m[错误] {e}\033[0m", f"\033[91m[Error] {e}\033[0m"))
+                    return
+
+        except Exception as e:
+            print(_(f"\033[91m[错误] {e}\033[0m", f"\033[91m[Error] {e}\033[0m"))
+            return
+
+        return
+
 def _(zh, en):
     return zh if LANG == "zh" else en
 
-def buildrun(data, build):
+def buildrun(data, build, olnydep=False):
     if "main" not in data:
         print(_("\033[91m[错误] \033[4mpizza.json\033[24m 缺少 \033[4mmain\033[24m 字段\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m missing \033[4mmain\033[24m field\033[0m"))
         return
@@ -492,7 +517,8 @@ def buildrun(data, build):
                     result = process.poll()
                     if result is not None:
                         if result != 0:
-                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", "") + f"] {dep}{' ' * long} | \033[91m" + _("ERROR", "ERROR") + "\033[0m", end='')
+                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" +
+                                  _("个依赖", "") + f"] {dep}{' ' * long} | \033[91m" + _("ERROR", "ERROR") + "\033[0m", end='')
                             if not data.get("build").get("skip"):
                                 print("\r", end='')
                                 raise
@@ -503,7 +529,8 @@ def buildrun(data, build):
                         else:
                             print("\r", end='')
                             print("\033[K", end='')
-                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", "") + f"] {dep}{' ' * long} | \033[92m" + _("OK", "OK") + "\033[0m")
+                            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}"+
+                                  _("个依赖", "") + f"] {dep}{' ' * long} | \033[92m" + _("OK", "OK") + "\033[0m")
                             break
 
                     p += 1
@@ -515,155 +542,158 @@ def buildrun(data, build):
             n += 1
 
         except Exception as e:
-            print("[第" + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" + _("个依赖", " dependencies") + f"] {dep}{' ' * long} | \033[91m" + _("ERROR", "ERROR") + "\033[0m")
+            print(_("[第", "[dependencies: ") + "0" * (len(f"{all}") - len(f"{n}")) + f"{n}/{all}" +
+                  _("个依赖", "") + f"] {dep}{' ' * long} | \033[91m" + _("ERROR", "ERROR") + "\033[0m", end='')
             if not data.get("build").get("skip"):
                 return
             else:
                 n += 1
                 continue
 
-    with open(tmpfile, "w", encoding="utf-8") as file:
-        file.write(open(data["main"], "r", encoding="utf-8").read() + f"\nif __name__ == '__main__':\n    {func}()")
+    if not olnydep:
+        with open(tmpfile, "w", encoding="utf-8") as file:
+            file.write(open(data["main"], "r", encoding="utf-8").read() + f"\nif __name__ == '__main__':\n    {func}()")
 
-    if not build:
-        subprocess.run(["python" if os.name == "nt" else "python3", tmpfile] + runargs)
-        os.remove(tmpfile)
+        if not build:
+            subprocess.run(["python" if os.name == "nt" else "python3", tmpfile] + runargs)
+            os.remove(tmpfile)
 
-    else:
-        if data["main"][-3:] == ".py":
-            exe    = os.path.basename(data["main"][:-3] + ".exe")
-            spec   = os.path.basename(data["main"][:-3] + ".spec")
-            output = os.path.basename(data["main"][:-3])
         else:
-            exe    = os.path.basename(data["main"] + ".exe")
-            spec   = os.path.basename(data["main"] + ".spec")
-            output = os.path.basename(data["main"])
+            if data["main"][-3:] == ".py":
+                exe    = os.path.basename(data["main"][:-3] + ".exe")
+                spec   = os.path.basename(data["main"][:-3] + ".spec")
+                output = os.path.basename(data["main"][:-3])
+            else:
+                exe    = os.path.basename(data["main"] + ".exe")
+                spec   = os.path.basename(data["main"] + ".spec")
+                output = os.path.basename(data["main"])
 
-        if build:
-            if len(sys.argv) <= 2:
-                lines    = tree(".")
-                in033    = False
-                newlines = []
+            if build:
+                if len(sys.argv) <= 2:
+                    lines    = tree(".")
+                    in033    = False
+                    newlines = []
 
-                for line in lines:
-                    newline  = ""
-                    for b in line:
-                        if b != "\033" and not in033:
-                            newline += b
-                        elif b == "\033":
-                            in033 = True
-                        elif b == "m":
-                            in033 = False
+                    for line in lines:
+                        newline  = ""
+                        for b in line:
+                            if b != "\033" and not in033:
+                                newline += b
+                            elif b == "\033":
+                                in033 = True
+                            elif b == "m":
+                                in033 = False
 
-                    newlines.append(newline)
+                        newlines.append(newline)
 
-                long = max(cnlen(line) for line in newlines)
+                    long = max(cnlen(line) for line in newlines)
 
-                if data["deps"]:
+                    if data["deps"]:
+                        print()
+
+                    print( "╭─ " + _("项目结构", "Project Structure") + " " + "─" * (_(long-9, long-18)) + "╮")
+                    print(f"│ \033[97m{os.path.basename(os.getcwd())}/\033[0m" +
+                          (" " * (long - cnlen(os.path.basename(os.getcwd()))) + "│"))
+
+                    pos = 0
+                    for line in lines:
+                        padding = long - cnlen(newlines[pos])
+                        print(f"│ {line}{' ' * padding} │")
+                        pos += 1
+
+                    print("╰" + "─" * (long+2) + "╯")
                     print()
 
-                print( "╭─ " + _("项目结构", "Project Structure") + " " + "─" * (_(long-9, long-18)) + "╮")
-                print(f"│ \033[97m{os.path.basename(os.getcwd())}/\033[0m" + (" " * (long - cnlen(os.path.basename(os.getcwd()))) + "│"))
-
-                pos = 0
-                for line in lines:
-                    padding = long - cnlen(newlines[pos])
-                    print(f"│ {line}{' ' * padding} │")
-                    pos += 1
-
-                print("╰" + "─" * (long+2) + "╯")
-                print()
-
-            print("\r\033[K", end='')
-            print(_("╭─ Pizza ──────" + "─" * cnlen(f"output/{exe}") + "╮",
-                    "╭─ Pizza ──────────────" + "─" * cnlen(f"output/{exe}") + "╮"))
-            print(_("│              " + " " * cnlen(f"output/{exe}") + "│",
-                    "│                      " + " " * cnlen(f"output/{exe}") + "│"))
-            print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
-                    "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
-            try:
-                with open("BluePlanet.ico", "wb") as f:
-                    f.write(base64.b64decode(DATA))
-                if data.get("build").get("icon"):
-                    process = subprocess.Popen(
-                        f'pyinstaller {tmpfile} --onefile --name {output}' +
-                        f' --icon={data.get("build").get("icon")}' +
-                        (" --noconsole" if not data.get("build").get("console") else ""),
-                        shell=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                else:
-                    process = subprocess.Popen(
-                        f'pyinstaller {tmpfile} --onefile --name {output}' +
-                        f' --icon=BluePlanet.ico' +
-                        (" --noconsole" if not data.get("build").get("console") else ""),
-                        shell=True,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                n = 0
-                print("\033[F", end='')
-                print("\033[F", end='')
-                while True:
-                    try:
-                        bar   = ["|", "/", "-", "\\"]
-                        order = [0, 1, 2, 3]
-                        if n >= len(order):
-                            n = 0
-                        print("│ \033[93m" + _("编译中", "Building") + "\033[0m \033[36m" + bar[order[n]] + "\033[0m", end='\r', flush=True)
-                        result = process.poll()
-                        if result is not None:
-                            if result != 0:
-                                print( "│ \033[91m" + _("编译失败", "Build failed") + "\033[0m")
-                                print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
-                                        "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
-                                return
-                            else:
-                                print(  "│ \033[92m" + _("编译成功", "Build successful") + f"\033[0m \033[93m->\033[0m \033[4moutput/{exe}\033[0m")
-                                print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
-                                        "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
-                                return
-
-                        n += 1
-                        time.sleep(0.5)
-
-                    except KeyboardInterrupt:
-                        print()
-                        print()
-                        exit()
-
-            except Exception as e:
-                print(_("\033[91m[错误] 编译失败: {}\033[0m".format(e), "\033[91m[Error] Build failed: {}\033[0m".format(e)))
-            finally:
+                print("\r\033[K", end='')
+                print(_("╭─ Pizza ──────" + "─" * cnlen(f"output/{exe}") + "╮",
+                        "╭─ Pizza ──────────────" + "─" * cnlen(f"output/{exe}") + "╮"))
+                print(_("│              " + " " * cnlen(f"output/{exe}") + "│",
+                        "│                      " + " " * cnlen(f"output/{exe}") + "│"))
+                print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
+                        "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
                 try:
+                    with open("BluePlanet.ico", "wb") as f:
+                        f.write(base64.b64decode(DATA))
+                    if data.get("build").get("icon"):
+                        process = subprocess.Popen(
+                            f'pyinstaller {tmpfile} --onefile --name {output}' +
+                            f' --icon={data.get("build").get("icon")}' +
+                            (" --noconsole" if not data.get("build").get("console") else ""),
+                            shell=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                    else:
+                        process = subprocess.Popen(
+                            f'pyinstaller {tmpfile} --onefile --name {output}' +
+                            f' --icon=BluePlanet.ico' +
+                            (" --noconsole" if not data.get("build").get("console") else ""),
+                            shell=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                    n = 0
+                    print("\033[F", end='')
+                    print("\033[F", end='')
+                    while True:
+                        try:
+                            bar   = ["|", "/", "-", "\\"]
+                            order = [0, 1, 2, 3]
+                            if n >= len(order):
+                                n = 0
+                            print("│ \033[93m" + _("编译中", "Building") + "\033[0m \033[36m" + bar[order[n]] + "\033[0m", end='\r', flush=True)
+                            result = process.poll()
+                            if result is not None:
+                                if result != 0:
+                                    print( "│ \033[91m" + _("编译失败", "Build failed") + "\033[0m")
+                                    print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
+                                            "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
+                                    return
+                                else:
+                                    print(  "│ \033[92m" + _("编译成功", "Build successful") + f"\033[0m \033[93m->\033[0m \033[4moutput/{exe}\033[0m")
+                                    print(_("╰──────────────" + "─" * cnlen(f"output/{exe}") + "╯",
+                                            "╰──────────────────────" + "─" * cnlen(f"output/{exe}") + "╯"))
+                                    return
+
+                            n += 1
+                            time.sleep(0.5)
+
+                        except KeyboardInterrupt:
+                            print()
+                            print()
+                            exit()
+
+                except Exception as e:
+                    print(_("\033[91m[错误] 编译失败: {}\033[0m".format(e), "\033[91m[Error] Build failed: {}\033[0m".format(e)))
+                finally:
                     try:
-                        os.makedirs("output")
+                        try:
+                            os.makedirs("output")
+                        except:
+                            pass
+                        shutil.move(os.path.join("dist", exe), os.path.join("output", exe))
                     except:
                         pass
-                    shutil.move(os.path.join("dist", exe), os.path.join("output", exe))
-                except:
-                    pass
-                try:
-                    shutil.rmtree("dist")
-                except:
-                    pass
-                try:
-                    shutil.rmtree("build")
-                except:
-                    pass
-                try:
-                    os.remove("BluePlanet.ico")
-                except:
-                    pass
-                try:
-                    os.remove(spec)
-                except:
-                    pass
-                try:
-                    os.remove(tmpfile)
-                except:
-                    pass
+                    try:
+                        shutil.rmtree("dist")
+                    except:
+                        pass
+                    try:
+                        shutil.rmtree("build")
+                    except:
+                        pass
+                    try:
+                        os.remove("BluePlanet.ico")
+                    except:
+                        pass
+                    try:
+                        os.remove(spec)
+                    except:
+                        pass
+                    try:
+                        os.remove(tmpfile)
+                    except:
+                        pass
 
 def tree(path, prefix="", lines=None):
     if lines is None:
@@ -728,7 +758,7 @@ def cnlen(text):
     return length
 
 def help():
-    VERSION = "1.3.4"
+    VERSION = "1.3.5"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -750,6 +780,8 @@ def help():
     print(f"  \033[36mrun\033[0m                    - \033[93m" + _("运行Pizza项目", "Run Pizza project") + "\033[0m")
     print(f"  \033[36m ├──── {_('<文件名>        ', '<File>          ')}\033[0m- \033[93m" + _("运行Python脚本", "Run Python script") + "\033[0m")
     print(f"  \033[36m ╰──── {_('<文件名:入口点> ', '<File:Entry>    ')}\033[0m- \033[93m" + _("指定运行脚本的入口点", "Specify entry point for run") + "\033[0m")
+    print(f"  \033[36mpublish\033[0m                - \033[93m" + _("项目发版到PyPI", "Project release to PyPI") + "\033[0m")
+    print(f"  \033[36minstall\033[0m                - \033[93m" + _("安装项目的所有依赖", "Install all dependencies for the project") + "\033[0m")
 
     print(f"  \033[36mclean\033[0m                  - \033[93m" + _("清理build", "Clean build files") + "\033[0m")
     print(f"  \033[36mnew    {_('<项目名>        ', '<Project Name>  ')}\033[0m- \033[93m" + _("创建新项目", "Create new project") + "\033[0m")
@@ -758,7 +790,7 @@ def help():
     print(f"  \033[36madd    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Add project dependencies") + "\033[0m")
     print(f"  \033[36mremove {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("删除项目依赖", "Remove project dependencies") + "\033[0m")
     print(f"  \033[36mset    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Set project dependencies") + "\033[0m")
-    print(f"  \033[36mpublish\033[0m                - \033[93m" + _("项目发版到PyPI", "Project release to PyPI") + "\033[0m")
+
     print(f"  \033[36mfreeze {_('<文件>', '<File>')}\033[0m          - \033[93m" + _("输出项目依赖到文件", "Output project dependency to file") + "\033[0m")
     print(f"  \033[36mhelp\033[0m                   - \033[93m" + _("显示帮助", "Show help") + "\033[0m")
 
@@ -798,11 +830,12 @@ def main(args=None):
             return
 
         try:
-            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set", "publish", "freeze"] or args[1] == "help":
+            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set", "publish", "freeze", "install"] or args[1] == "help":
                 ret = project.scripts(args[1])
                 if ret == 127:
                     if args[1] != "help":
-                        print(_("\033[91m[错误] 没有这个参数\033[0m", "\033[91m[Error] Unknown parameter\033[0m"))
+                        print(_("\033[91m[错误] 没有这个参数\033[0m",
+                                "\033[91m[Error] Unknown parameter\033[0m"))
 
                     help()
 
@@ -816,13 +849,15 @@ def main(args=None):
                 if len(args) >= 3:
                     project.freeze(args[2])
                 else:
-                    print(_("\033[91m[错误] \033[4mfreeze\033[24m 参数需要文件名称\033[0m", "\033[91m[Error] \033[4mfreeze\033[24m requires file name\033[0m"))
+                    print(_("\033[91m[错误] \033[4mfreeze\033[24m 参数需要文件名称\033[0m",
+                            "\033[91m[Error] \033[4mfreeze\033[24m requires file name\033[0m"))
 
             if args[1] == "new":
                 if len(args) >= 3:
                     project.new(args[2])
                 else:
-                    print(_("\033[91m[错误] \033[4mnew\033[24m 参数需要项目名称\033[0m", "\033[91m[Error] \033[4mnew\033[24m requires project name\033[0m"))
+                    print(_("\033[91m[错误] \033[4mnew\033[24m 参数需要项目名称\033[0m",
+                            "\033[91m[Error] \033[4mnew\033[24m requires project name\033[0m"))
 
                 return
 
@@ -844,12 +879,14 @@ def main(args=None):
                     try:
                         icon = args[pos + 1]
                     except IndexError:
-                        print(_("\033[91m[错误] \033[4m-i\033[24m 参数需要一个图标文件\033[0m", "\033[91m[Error] \033[4m-i\033[24m requires an icon file\033[0m"))
+                        print(_("\033[91m[错误] \033[4m-i\033[24m 参数需要一个图标文件\033[0m",
+                                "\033[91m[Error] \033[4m-i\033[24m requires an icon file\033[0m"))
                         return
 
                 try:
                     func    = args[2].split(":")[1]
                     args[2] = args[2].split(":")[0]
+
                 except:
                     buildrun({
                         "main": f"{args[2]}:main",
@@ -870,6 +907,10 @@ def main(args=None):
 
                 return
 
+            if args[1] == "install":
+                project.install()
+                return
+
             if args[1] == "run":
                 project.run(build=False)
                 return
@@ -882,7 +923,8 @@ def main(args=None):
                 if len(args) >= 3:
                     project.deps.add(','.join(args[2:]))
                 else:
-                    print(_("\033[91m[错误] \033[4madd\033[24m 参数需要依赖名称\033[0m", "\033[91m[Error] \033[4madd\033[24m requires some dependencies\033[0m"))
+                    print(_("\033[91m[错误] \033[4madd\033[24m 参数需要依赖名称\033[0m",
+                            "\033[91m[Error] \033[4madd\033[24m requires some dependencies\033[0m"))
 
                 return
 
@@ -890,7 +932,8 @@ def main(args=None):
                 if len(args) >= 3:
                     project.deps.remove(','.join(args[2:]))
                 else:
-                    print(_("\033[91m[错误] \033[4mremove\033[24m 参数需要依赖名称\033[0m", "\033[91m[Error] \033[4mremove\033[24m requires some dependencies\033[0m"))
+                    print(_("\033[91m[错误] \033[4mremove\033[24m 参数需要依赖名称\033[0m",
+                            "\033[91m[Error] \033[4mremove\033[24m requires some dependencies\033[0m"))
 
                 return
 
@@ -901,7 +944,8 @@ def main(args=None):
                     else:
                         project.deps.set(','.join(args[2:]))
                 else:
-                    print(_("\033[91m[错误] \033[4mset\033[24m 参数需要依赖名称\033[0m", "\033[91m[Error] \033[4mset\033[24m requires some dependencies\033[0m"))
+                    print(_("\033[91m[错误] \033[4mset\033[24m 参数需要依赖名称\033[0m",
+                            "\033[91m[Error] \033[4mset\033[24m requires some dependencies\033[0m"))
 
                 return
 
@@ -958,6 +1002,7 @@ if __name__ == "__main__":
         exit()
     except Exception as e:
         print(_("\033[91m[错误] {}\033[0m".format(e), "\033[91m[Error] {}\033[0m".format(e)))
+
     finally:
         for file in glob.glob(".tmp_*"):
             try:
