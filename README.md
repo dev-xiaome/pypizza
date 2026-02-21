@@ -4,6 +4,7 @@
 **使用非常简单的PyPizza的项目格式**<br>
 ### 使用
 #### 安装
+**系统: ```Windows```**<br>
 **要求: ```Python>=3.8```**<br>
 
 **依赖: ```PyInstaller>=6.0```**<br>
@@ -75,8 +76,7 @@
     "main": "src/main.py:main", //入口点(文件路径:入口函数)
     "deps": [], //依赖(pip)
     "scripts": { //脚本
-        "test": ["py test.py","python3 test.py"] //["Windows命令", "其它系统命令"]
-        "hello": "echo hello" //通用命令
+        "hello": "echo hello" //自定义脚本, 使用: pizza hello
     },
     "build": { //编译参数
         "icon": null, //图标(null使用默认)
