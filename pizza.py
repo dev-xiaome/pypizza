@@ -425,6 +425,27 @@ class project:
                 pass
         return
 
+    @staticmethod
+    def freeze(filename):
+        try:
+            if os.path.isfile("pizza.json"):
+                try:
+                    with open("pizza.json", "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except:
+                    print(_("\033[91m[错误] \033[4mpizza.json\033[24m 项目文件读取失败\033[0m", "\033[91m[Error] \033[4mpizza.json\033[24m read failed\033[0m"))
+                    return
+
+                with open(filename, 'w', encoding='utf-8') as file:
+                    for d in data.get("deps") or []:
+                        file.write(f"{d}\n")
+
+        except Exception as e:
+            print(_(f"\033[91m[错误] {e}\033[0m", f"\033[91m[Error] {e}\033[0m"))
+            return
+
+        return
+
 def _(zh, en):
     return zh if LANG == "zh" else en
 
@@ -707,7 +728,7 @@ def cnlen(text):
     return length
 
 def help():
-    VERSION = "1.3.2"
+    VERSION = "1.3.3"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
@@ -738,6 +759,7 @@ def help():
     print(f"  \033[36mremove {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("删除项目依赖", "Remove project dependencies") + "\033[0m")
     print(f"  \033[36mset    {_('<依赖名称>      ', '<Dependencies>  ')}\033[0m- \033[93m" + _("添加项目依赖", "Set project dependencies") + "\033[0m")
     print(f"  \033[36mpublish\033[0m                - \033[93m" + _("项目发版到PyPI", "Project release to PyPI") + "\033[0m")
+    print(f"  \033[36mfreeze {_('<文件>', '<File>')}\033[0m          - \033[93m" + _("输出项目依赖到文件", "Output project dependency to file") + "\033[0m")
     print(f"  \033[36mhelp\033[0m                   - \033[93m" + _("显示帮助", "Show help") + "\033[0m")
 
     print(f"\033[92m" + _("参数:", "Parameters:") + "\033[0m")
@@ -776,7 +798,7 @@ def main(args=None):
             return
 
         try:
-            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set", "publish"] or args[1] == "help":
+            if args[1] not in ["build", "run", "clean", "new", "info", "add", "remove", "set", "publish", "freeze"] or args[1] == "help":
                 ret = project.scripts(args[1])
                 if ret == 127:
                     if args[1] != "help":
@@ -789,6 +811,12 @@ def main(args=None):
             if args[1] == "publish":
                 project.publish()
                 return
+
+            if args[1] == "freeze":
+                if len(args) >= 3:
+                    project.freeze(args[2])
+                else:
+                    print(_("\033[91m[错误] \033[4mfreeze\033[24m 参数需要文件名称\033[0m", "\033[91m[Error] \033[4mfreeze\033[24m requires file name\033[0m"))
 
             if args[1] == "new":
                 if len(args) >= 3:
