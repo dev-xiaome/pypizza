@@ -523,7 +523,7 @@ def buildrun(data, build):
                 continue
 
     with open(tmpfile, "w", encoding="utf-8") as file:
-        file.write(open(data["main"], "r", encoding="utf-8").read() + f"\nif __name__ == '__main__': {func}()")
+        file.write(open(data["main"], "r", encoding="utf-8").read() + f"\nif __name__ == '__main__':\n    {func}()")
 
     if not build:
         subprocess.run(["python" if os.name == "nt" else "python3", tmpfile] + runargs)
@@ -728,7 +728,7 @@ def cnlen(text):
     return length
 
 def help():
-    VERSION = "1.3.3"
+    VERSION = "1.3.4"
     LOGO = (
         (r"  ____        ____  _              "),
         (r" |  _ \ _   _|  _ \(_)__________ _ "),
